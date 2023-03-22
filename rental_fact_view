@@ -1,0 +1,23 @@
+ SELECT p.customer_id,
+    staff_store.store_id,
+    d.date_id,
+    count(p.rental_id) AS rental_count,
+    sum(p.amount)::numeric(5,2) AS rental_revenue,
+    sum(
+        CASE
+            WHEN r.return_date IS NOT NULL THEN days_between(r.rental_date::date, r.return_date::date)::numeric * inventory_film.rental_rate
+            ELSE 0::numeric
+        END)::numeric(5,2) AS late_fee_revenue
+   FROM payment p
+     JOIN ( SELECT sta.staff_id,
+            sto.store_id
+           FROM staff sta
+             JOIN store_dim sto ON sta.store_id = sto.store_id) staff_store ON staff_store.staff_id = p.staff_id
+     JOIN rental r ON p.rental_id = r.rental_id
+     JOIN date_dim d ON d.date = date(r.rental_date)
+     JOIN ( SELECT i.inventory_id,
+            f.rental_rate
+           FROM inventory i
+             JOIN film f ON i.film_id = f.film_id) inventory_film ON inventory_film.inventory_id = r.inventory_id
+  GROUP BY r.rental_id, p.customer_id, staff_store.store_id, d.date_id
+  ORDER BY r.rental_id;

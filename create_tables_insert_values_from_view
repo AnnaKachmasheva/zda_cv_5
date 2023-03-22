@@ -1,0 +1,33 @@
+DROP TABLE IF EXISTS public.date_dim;
+CREATE TABLE public.date_dim (
+    date_id     SERIAL PRIMARY KEY,
+    date        DATE,
+    year        INT,
+    quarter     INT,
+    month       INT,
+    day         INT,
+    day_of_week INT,
+    day_name    VARCHAR(10),
+    is_weekend  BOOLEAN
+);
+INSERT INTO public.date_dim(date, year, quarter, month, day,day_of_week, day_name, is_weekend)
+SELECT * FROM rental_date_view;
+
+
+
+DROP TABLE IF EXISTS public.rental_fact;
+CREATE TABLE public.rental_fact (
+    customer_id      INT,
+    store_id         INT,
+    rental_count     INT,
+    rental_revenue   DECIMAL(5, 2),
+    late_fee_revenue DECIMAL(5, 2),
+	CONSTRAINT fk_customer
+      FOREIGN KEY(customer_id) 
+	  REFERENCES customer(customer_id),
+	CONSTRAINT fk_store_id
+      FOREIGN KEY(store_id) 
+	  REFERENCES store(store_id)
+);
+INSERT INTO public.rental_fact
+SELECT * FROM rental_fact_view;
